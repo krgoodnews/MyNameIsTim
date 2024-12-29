@@ -20,16 +20,17 @@ struct ContentView: View {
                     ScrollView(.horizontal) {
                         HStack(spacing: 0) {
                             ForEach(items) { item in
+                                let isLogged = item.color == .blue
+
                                 CardView(item)
                                     .padding(.horizontal, 88)
                                     .frame(width: size.width)
-                                    .visualEffect { @MainActor content, geometryProxy in
-
+                                    .visualEffect { content, geometryProxy in
                                         content
-                                            .scaleEffect(scale(for: geometryProxy, scale: 0.1), anchor: .trailing)
-                                            .rotationEffect(rotation(for: geometryProxy, rotation: isRotationEnabled ? 5 : 0))
+                                            .scaleEffect(scale(for: geometryProxy, scale: 0.1, isLogged: isLogged), anchor: .trailing)
+                                            .rotationEffect(rotation(for: geometryProxy, rotation: isRotationEnabled ? 5 : 0, isLogged: isLogged))
                                             .offset(x: minX(for: geometryProxy))
-                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10))
+                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
                                     }
                                     .zIndex(items.zIndex(for: item))
                             }
@@ -71,32 +72,37 @@ struct ContentView: View {
     }
 
 //    nonisolated
-    private func progress(for proxy: GeometryProxy, limit: CGFloat = 2) -> CGFloat {
+    private func progress(for proxy: GeometryProxy, limit: CGFloat = 2, isLogged: Bool) -> CGFloat {
         let maxX = proxy.frame(in: .scrollView(axis: .horizontal)).maxX
         let width = proxy.bounds(of: .scrollView(axis: .horizontal))?.width ?? 0
 
         // Converting into Progress
         let progress = (maxX / width) - 1.0
         let cappedProgress = min(progress, limit)
+
+        if isLogged {
+            print("Progress: \(progress)")
+            print("Capped Progress: \(cappedProgress)")
+        }
         return cappedProgress
     }
 
 //    nonisolated
-    private func scale(for proxy: GeometryProxy, scale: CGFloat = 0.1) -> CGFloat {
-        let progress = self.progress(for: proxy)
+    private func scale(for proxy: GeometryProxy, scale: CGFloat = 0.1, isLogged: Bool) -> CGFloat {
+        let progress = self.progress(for: proxy, isLogged: isLogged)
         return 1 - progress * scale
     }
 
 //    nonisolated
-    private func excessMinX(for proxy: GeometryProxy, offset: CGFloat = 10) -> CGFloat {
-        let progress = self.progress(for: proxy)
+    private func excessMinX(for proxy: GeometryProxy, offset: CGFloat = 10, isLogged: Bool) -> CGFloat {
+        let progress = self.progress(for: proxy, isLogged: isLogged)
 
         return progress * offset
     }
 
 //    nonisolated
-    private func rotation(for proxy: GeometryProxy, rotation: CGFloat = 5) -> Angle {
-        let progress = self.progress(for: proxy)
+    private func rotation(for proxy: GeometryProxy, rotation: CGFloat = 5, isLogged: Bool) -> Angle {
+        let progress = self.progress(for: proxy, isLogged: isLogged)
 
         return .init(degrees: progress * rotation)
     }
