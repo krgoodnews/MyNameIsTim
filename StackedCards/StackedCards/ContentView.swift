@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var isRotationEnabled: Bool = true
     @State private var isShowsIndicator: Bool = false
+    @State private var scrolledID: Int? 
 
     var body: some View {
         NavigationStack {
@@ -19,7 +20,8 @@ struct ContentView: View {
 
                     ScrollView(.horizontal) {
                         HStack(spacing: 0) {
-                            ForEach(items) { item in
+                            ForEach(0..<items.count, id:\.self) { index in
+                                let item = items[index]
                                 let isLogged = item.color == .blue
 
                                 CardView(item)
@@ -33,13 +35,16 @@ struct ContentView: View {
                                             .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
                                     }
                                     .zIndex(items.zIndex(for: item))
+                                    .id(index)
                             }
                         }
+                        .scrollTargetLayout()
                         .padding(.vertical, 16)
                     }
                     .scrollTargetBehavior(.paging)
                     .scrollIndicators(isShowsIndicator ? .visible : .hidden)
                     .scrollIndicatorsFlash(trigger: isShowsIndicator)
+                    .scrollPosition(id: $scrolledID)
                 }
                 .frame(height: 400)
                 .animation(.snappy, value: isRotationEnabled)
@@ -54,6 +59,9 @@ struct ContentView: View {
                 .padding()
             }
             .navigationTitle("Stacked Cards")
+        }
+        .onChange(of: scrolledID) { oldValue, newValue in
+            print("Scrolled ID: \(String(describing: newValue))")
         }
     }
 
