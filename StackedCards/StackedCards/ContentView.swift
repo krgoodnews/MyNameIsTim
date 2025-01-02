@@ -8,9 +8,25 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var isRotationEnabled: Bool = true
+    @State private var isRotationEnabled: Bool = false
     @State private var isShowsIndicator: Bool = false
-    @State private var scrolledID: Int? 
+    @State private var scrolledID: Int?
+    @State private var currentIndex: Int? = 0
+    @State private var dragDirection: String = "None"
+
+    let items: [Item] = [
+        Item(color: .red),
+        Item(color: .orange),
+        Item(color: .yellow),
+        Item(color: .green),
+        Item(color: .cyan),
+        Item(color: .blue),
+        Item(color: .purple),
+
+    ]
+
+    // 스크롤 상태 관리
+    @State private var isDragging: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -22,19 +38,21 @@ struct ContentView: View {
                         HStack(spacing: 0) {
                             ForEach(0..<items.count, id:\.self) { index in
                                 let item = items[index]
-                                let isLogged = item.color == .blue
+                                let isLogged = index == currentIndex
 
                                 CardView(item)
                                     .padding(.horizontal, 88)
                                     .frame(width: size.width)
                                     .visualEffect { content, geometryProxy in
                                         content
-                                            .scaleEffect(scale(for: geometryProxy, scale: 0.1, isLogged: isLogged), anchor: .trailing)
                                             .rotationEffect(rotation(for: geometryProxy, rotation: isRotationEnabled ? 5 : 0, isLogged: isLogged))
-                                            .offset(x: minX(for: geometryProxy))
-                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
+                                            .scaleEffect(scale(for: geometryProxy, scale: 0.1, isLogged: isLogged), anchor: .trailing)
+
+                                            .offset(x: minX(for: geometryProxy, isLogged: isLogged))
+//                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
+//                                            .opacity(0.6)
                                     }
-                                    .zIndex(items.zIndex(for: item))
+                                    .zIndex(index == scrolledID ? 100 : items.zIndex(for: item, currentIndex: currentIndex ?? 0))
                                     .id(index)
                             }
                         }
@@ -45,6 +63,36 @@ struct ContentView: View {
                     .scrollIndicators(isShowsIndicator ? .visible : .hidden)
                     .scrollIndicatorsFlash(trigger: isShowsIndicator)
                     .scrollPosition(id: $scrolledID)
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { value in
+                                if !isDragging {
+                                    isDragging = true
+                                    print("Scrolling started")
+                                    if let scrolledID = scrolledID {
+                                        currentIndex = scrolledID
+                                    }
+                                }
+
+                                // translation.width > 0 이면 오른쪽, < 0 이면 왼쪽
+                                if value.translation.width > 0 {
+                                    if dragDirection != "Right" {
+                                        dragDirection = "Right"
+                                        print("Scrolling to the Right")
+                                    }
+                                } else if value.translation.width < 0 {
+                                    if dragDirection != "Left" {
+                                        dragDirection = "Left"
+                                        print("Scrolling to the Left")
+                                    }
+                                }
+                            }
+                            .onEnded { _ in
+                                isDragging = false
+                                print("Scrolling ended")
+                                
+                            }
+                    )
                 }
                 .frame(height: 400)
                 .animation(.snappy, value: isRotationEnabled)
@@ -66,7 +114,7 @@ struct ContentView: View {
     }
 
     /// Card View
-//    @ViewBuilder
+    @ViewBuilder
     func CardView(_ item: Item) -> some View {
         RoundedRectangle(cornerRadius: 20)
             .fill(item.color.gradient)
@@ -74,9 +122,15 @@ struct ContentView: View {
 
     /// Stakced Cards Animation
 //    nonisolated
-    private func minX(for proxy: GeometryProxy) -> CGFloat {
+    private func minX(for proxy: GeometryProxy, isLogged: Bool) -> CGFloat {
         let minX = proxy.frame(in: .scrollView(axis: .horizontal)).minX
-        return minX < 0 ? 0 : -minX
+        if isLogged { return -minX * edgeGain(progress(for: proxy, isLogged: isLogged)) }
+        return -minX
+    }
+
+    private func edgeGain(_ x: CGFloat) -> CGFloat {
+        if abs(x) > 1 { return 0 }
+        return 4 * pow(abs(x) - 0.5, 2)
     }
 
 //    nonisolated
@@ -97,8 +151,9 @@ struct ContentView: View {
 
 //    nonisolated
     private func scale(for proxy: GeometryProxy, scale: CGFloat = 0.1, isLogged: Bool) -> CGFloat {
+//        return 1
         let progress = self.progress(for: proxy, isLogged: isLogged)
-        return 1 - progress * scale
+        return 1 - abs(progress) * scale
     }
 
 //    nonisolated

@@ -12,19 +12,24 @@ struct Item: Identifiable {
     var color: Color
 }
 
-let items: [Item] = [
-    Item(color: .red),
-    Item(color: .blue),
-    Item(color: .green),
-    Item(color: .orange),
-    Item(color: .purple),
-    Item(color: .yellow),
-]
-
 extension [Item] {
-    func zIndex(for item: Item) -> CGFloat {
+    func zIndex(for item: Item, currentIndex: Int) -> CGFloat {
         if let index = firstIndex(where: { $0.id == item.id }) {
-            return CGFloat(count) - CGFloat(index)
+            if currentIndex == index {
+                return CGFloat(count * 3)
+            }
+
+            if index > currentIndex {
+                return CGFloat(count * 2) - CGFloat(index)
+            }
+
+            return CGFloat(index)
+
+//            let originIndex = CGFloat(count) - CGFloat(index)
+//            if index < currentIndex {
+//                return originIndex
+//            }
+//            return 50 - originIndex
         }
 
         return .zero
