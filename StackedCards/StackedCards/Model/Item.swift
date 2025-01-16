@@ -13,23 +13,18 @@ struct Item: Identifiable {
 }
 
 extension [Item] {
-    func zIndex(for item: Item, currentIndex: Int) -> CGFloat {
+    func zIndex(for item: Item, currentIndex: Int, scrollDirection: String) -> CGFloat {
+        let isDragLeft = scrollDirection.lowercased() == "left"
         if let index = firstIndex(where: { $0.id == item.id }) {
             if currentIndex == index {
                 return CGFloat(count * 3)
             }
 
             if index > currentIndex {
-                return CGFloat(count * 2) - CGFloat(index)
+                return CGFloat(count * (isDragLeft ? 2 : 1)) - CGFloat(index)
             }
 
-            return CGFloat(index)
-
-//            let originIndex = CGFloat(count) - CGFloat(index)
-//            if index < currentIndex {
-//                return originIndex
-//            }
-//            return 50 - originIndex
+            return isDragLeft ? CGFloat(index) : CGFloat(index) + CGFloat(count)
         }
 
         return .zero

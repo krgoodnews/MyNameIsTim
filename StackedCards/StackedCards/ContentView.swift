@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var isRotationEnabled: Bool = false
+    @State private var isRotationEnabled: Bool = true
     @State private var isShowsIndicator: Bool = false
     @State private var scrolledID: Int?
     @State private var currentIndex: Int? = 0
@@ -49,10 +49,10 @@ struct ContentView: View {
                                             .scaleEffect(scale(for: geometryProxy, scale: 0.1, isLogged: isLogged), anchor: .trailing)
 
                                             .offset(x: minX(for: geometryProxy, isLogged: isLogged))
-//                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
+                                            .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
 //                                            .opacity(0.6)
                                     }
-                                    .zIndex(index == scrolledID ? 100 : items.zIndex(for: item, currentIndex: currentIndex ?? 0))
+                                    .zIndex(index == scrolledID ? 100 : items.zIndex(for: item, currentIndex: currentIndex ?? 0, scrollDirection: dragDirection))
                                     .id(index)
                             }
                         }
@@ -140,7 +140,9 @@ struct ContentView: View {
 
         // Converting into Progress
         let progress = (maxX / width) - 1.0
-        let cappedProgress = min(progress, limit)
+        var cappedProgress = min(progress, limit)
+
+        cappedProgress = max(cappedProgress, -limit)
 
         if isLogged {
             print("Progress: \(progress)")
@@ -151,7 +153,6 @@ struct ContentView: View {
 
 //    nonisolated
     private func scale(for proxy: GeometryProxy, scale: CGFloat = 0.1, isLogged: Bool) -> CGFloat {
-//        return 1
         let progress = self.progress(for: proxy, isLogged: isLogged)
         return 1 - abs(progress) * scale
     }
@@ -160,7 +161,11 @@ struct ContentView: View {
     private func excessMinX(for proxy: GeometryProxy, offset: CGFloat = 10, isLogged: Bool) -> CGFloat {
         let progress = self.progress(for: proxy, isLogged: isLogged)
 
-        return progress * offset
+        if progress >= 0 {
+            return progress * offset
+        } else {
+            return progress * offset * 6
+        }
     }
 
 //    nonisolated
