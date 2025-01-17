@@ -41,12 +41,12 @@ struct ContentView: View {
                                 let isLogged = index == currentIndex
 
                                 CardView(item)
-                                    .padding(.horizontal, 88)
+                                    .padding(.horizontal, size.width * 0.2)
                                     .frame(width: size.width)
                                     .visualEffect { content, geometryProxy in
                                         content
                                             .rotationEffect(rotation(for: geometryProxy, rotation: isRotationEnabled ? 5 : 0, isLogged: isLogged))
-                                            .scaleEffect(scale(for: geometryProxy, scale: 0.1, isLogged: isLogged), anchor: .trailing)
+                                            .scaleEffect(scale(for: geometryProxy, scale: 0.2, isLogged: isLogged), anchor: .trailing)
 
                                             .offset(x: minX(for: geometryProxy, isLogged: isLogged))
                                             .offset(x: excessMinX(for: geometryProxy, offset: isRotationEnabled ? 8 : 10, isLogged: isLogged))
@@ -164,7 +164,7 @@ struct ContentView: View {
         if progress >= 0 {
             return progress * offset
         } else {
-            return progress * offset * 6
+            return progress * offset * (proxy.size.width * 0.026)
         }
     }
 
